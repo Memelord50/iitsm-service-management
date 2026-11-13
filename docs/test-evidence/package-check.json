@@ -1,0 +1,13 @@
+{
+  "verifiedAt": "2026-11-10T17:04:13.924401+00:00",
+  "url": "http://localhost:8081",
+  "html": 200,
+  "assets": {
+    "/assets/index-D69fudEJ.js": 232876,
+    "/assets/charts-DPMUaRcf.js": 341138,
+    "/assets/index-CB7fle92.css": 17254
+  },
+  "openapiPaths": 31,
+  "testDependenciesExcluded": true,
+  "jarSha256": "86f4f1ed1330df60d66d991261734baadd79702e9c4d757d3048ad114ba25c32"
+}

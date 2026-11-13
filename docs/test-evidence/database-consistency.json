@@ -1,0 +1,22 @@
+{
+  "workloadComparisons": [
+    {
+      "technicianId": 2,
+      "apiWorkload": 2,
+      "sqlActiveAssignments": 2,
+      "status": "PASS"
+    },
+    {
+      "technicianId": 3,
+      "apiWorkload": 2,
+      "sqlActiveAssignments": 2,
+      "status": "PASS"
+    }
+  ],
+  "duplicateSlaSignals": 0,
+  "duplicateResponseCycles": 0,
+  "flyway": [
+    "1\t1",
+    "2\t1"
+  ]
+}

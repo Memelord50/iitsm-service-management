@@ -1,0 +1,409 @@
+{
+  "database": "MySQL 8.4.4",
+  "java": "25.0.5.0.3",
+  "build": "mvn clean package",
+  "cases": [
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "formulaUsesAllFourFactors",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "noEligibleCandidateLeavesUnassigned",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "missingKeyUsesFallback",
+      "seconds": 0.047,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "rejectionReopens",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "aiSelectsEnabledJavaStrategy",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "priorityRankingUsesSeverity",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "resolvedVerificationCloses",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "formulaConfigurationChangesResult",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "lifecycleRequiresWaitingForResponse",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "lifecycleRejectsPrematureClosure",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "lifecycleAllowsInvestigation",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "roundRobinChoosesOldestAssignment",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "disabledAiChoiceRejected",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "reopeningRequiresClosed",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "skillFirstDiffersFromLeastLoaded",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "matrixUsesImpactAndUrgency",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "workloadStateDefinition",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "disabledFallbackStillAvailable",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "resumedResolutionDeductsAccumulatedPause",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "pausedResolutionDoesNotAccrueTime",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "stoppedSlaIsStable",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "matrixEscalatesCriticalBusiness",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "matrixEscalatesAffectedUsers",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.DomainTest",
+      "name": "leastLoadedHasDeterministicTieBreak",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "httpRoleAuthorizationUsesJwtFilter",
+      "seconds": 0.178,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "completeWorkflowAuditNotificationsFeedback",
+      "seconds": 0.157,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "employeeCannotOverridePriority",
+      "seconds": 0.024,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "searchIsScopedAndFiltered",
+      "seconds": 0.065,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "snapshotColumnsRemainImmutableAfterFlush",
+      "seconds": 0.026,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "verificationTokenIsSingleUse",
+      "seconds": 0.071,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "warningsAt50And80AndBreachAreIdempotent",
+      "seconds": 0.042,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "rejectionDoesNotCreditSkill",
+      "seconds": 0.059,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "reportCountsRealIncidents",
+      "seconds": 0.024,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "verifiedCreditNotDuplicatedAcrossReopening",
+      "seconds": 0.074,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "reopenWindowEnforced",
+      "seconds": 0.034,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "attachmentAccessRestricted",
+      "seconds": 0.016,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "warningThresholdsAreConfigurable",
+      "seconds": 0.014,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "employeeCannotReadInternalNotes",
+      "seconds": 0.017,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "duplicateFeedbackDenied",
+      "seconds": 0.034,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "assignmentAloneDoesNotStopResponse",
+      "seconds": 0.01,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "resolvedReassignmentDoesNotAddWorkload",
+      "seconds": 0.026,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "deactivatedPolicyLeavesSnapshotIntact",
+      "seconds": 0.008,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "creationStartsBothClocksAtCreation",
+      "seconds": 0.008,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "pauseAndResumePreserveElapsed",
+      "seconds": 0.022,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "acknowledgementStopsOnlyResponse",
+      "seconds": 0.011,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "invalidLoginDenied",
+      "seconds": 0.06,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "unavailableTechnicianExcluded",
+      "seconds": 0.01,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "employeeCannotReadAnotherIncident",
+      "seconds": 0.011,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "reassignmentBeforeAcknowledgementTransfersWorkload",
+      "seconds": 0.025,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "successfulLogin",
+      "seconds": 0.061,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "feedbackBeforeClosureDenied",
+      "seconds": 0.011,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "httpMissingAuthenticationRejected",
+      "seconds": 0.005,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "reopenReassignsUnavailableOwnerWithoutLosingPreviousAssignment",
+      "seconds": 0.037,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "priorityRevisionPreservesSnapshotAndStart",
+      "seconds": 0.019,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "fallbackWorksWithEveryNormalStrategyDisabled",
+      "seconds": 0.01,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "missingPolicyPreservesTargetAndNotifiesAdmin",
+      "seconds": 0.016,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "responseNeverPausesWithResolution",
+      "seconds": 0.01,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "priorityRevisionPreservesAccumulatedPauseAndDeadlineOrigin",
+      "seconds": 0.028,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "reassignmentAfterAcknowledgementDoesNotRestartResponse",
+      "seconds": 0.012,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "recoveryChangesPasswordAndInvalidatesTokens",
+      "seconds": 0.185,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "skillRecognizedAtConfiguredThreshold",
+      "seconds": 0.036,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "startRequiresAcknowledgement",
+      "seconds": 0.016,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "reopenPreservesResponseAndAddsResolutionCycle",
+      "seconds": 0.032,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "malformedAttachmentRejected",
+      "seconds": 0.007,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.WorkflowTest",
+      "name": "noEligibleTechnicianPreservesNewIncident",
+      "seconds": 0.008,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.ExternalProviderTest",
+      "name": "missingProviderKeyFailsClearly",
+      "seconds": 0.136,
+      "status": "PASS"
+    },
+    {
+      "suite": "com.iitsm.ExternalProviderTest",
+      "name": "externalProviderSendsContextAndParsesStrategy",
+      "seconds": 0.06,
+      "status": "PASS"
+    }
+  ]
+}

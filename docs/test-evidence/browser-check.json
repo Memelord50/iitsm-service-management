@@ -1,0 +1,26 @@
+{
+  "url": "http://localhost:8081/",
+  "mobile": {
+    "width": 390,
+    "height": 844,
+    "documentWidth": 390,
+    "signIn": "PASS",
+    "navigationDrawer": "PASS",
+    "incidentList": "PASS"
+  },
+  "desktop": {
+    "width": 1440,
+    "height": 1000,
+    "documentWidth": 1440,
+    "dashboard": "PASS",
+    "slaMonitor": "PASS"
+  },
+  "packagedOriginConsoleErrors": [],
+  "screenshots": [
+    "../screenshots/mobile.png",
+    "../screenshots/overview.png",
+    "../screenshots/sla-monitor.png"
+  ],
+  "shortSlaDuration": "4-second target visibly renders as 4s",
+  "finalBuildRechecked": true
+}

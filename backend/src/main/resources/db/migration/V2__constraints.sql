@@ -1,0 +1,10 @@
+ALTER TABLE incident ADD CONSTRAINT ck_incident_factors CHECK (impact BETWEEN 1 AND 3 AND urgency BETWEEN 1 AND 3 AND criticality BETWEEN 1 AND 3 AND affected_users > 0);
+ALTER TABLE incident ADD CONSTRAINT ck_incident_status CHECK (status IN ('NEW','ASSIGNED','IN_PROGRESS','WAITING_FOR_EMPLOYEE','RESOLVED','CLOSED','REOPENED'));
+ALTER TABLE incident ADD CONSTRAINT ck_incident_priority CHECK (priority IN ('LOW','MEDIUM','HIGH','CRITICAL'));
+ALTER TABLE feedback ADD CONSTRAINT ck_feedback_rating CHECK (rating BETWEEN 1 AND 5);
+ALTER TABLE sla_policy ADD CONSTRAINT ck_policy_targets CHECK (response_seconds > 0 AND resolution_seconds > 0);
+ALTER TABLE sla_cycle ADD CONSTRAINT ck_cycle_target CHECK (original_target_seconds > 0 AND paused_seconds >= 0);
+ALTER TABLE app_user ADD CONSTRAINT ck_user_role CHECK (role IN ('EMPLOYEE','TECHNICIAN','ADMIN'));
+CREATE INDEX ix_incident_created ON incident(created_at);
+CREATE INDEX ix_sla_signal_detected ON sla_signal(detected_at);
+CREATE INDEX ix_outbox_status ON notification(delivery_status,attempts);

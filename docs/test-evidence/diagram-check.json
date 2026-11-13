@@ -1,0 +1,37 @@
+[
+  {
+    "diagram": 1,
+    "type": "flowchart LR",
+    "status": "PASS"
+  },
+  {
+    "diagram": 2,
+    "type": "flowchart TB",
+    "status": "PASS"
+  },
+  {
+    "diagram": 3,
+    "type": "classDiagram",
+    "status": "PASS"
+  },
+  {
+    "diagram": 4,
+    "type": "erDiagram",
+    "status": "PASS"
+  },
+  {
+    "diagram": 5,
+    "type": "stateDiagram-v2",
+    "status": "PASS"
+  },
+  {
+    "diagram": 6,
+    "type": "flowchart TD",
+    "status": "PASS"
+  },
+  {
+    "diagram": 7,
+    "type": "sequenceDiagram",
+    "status": "PASS"
+  }
+]
