@@ -15,6 +15,13 @@ public class User {
   public String role;
   public boolean active = true;
   public boolean verified;
+  public boolean adminCreated;
+
+  public boolean canSignIn() {
+    return active
+        && (verified || (adminCreated && ("ADMIN".equals(role) || "TECHNICIAN".equals(role))));
+  }
+
   public boolean available = true;
   public int tokenVersion;
 }

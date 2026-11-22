@@ -175,6 +175,143 @@ class WorkflowTest {
   }
 
   @Test
+  void adminCreatedStaffCanLoginWithoutFalsifyingVerification() {
+    as(admin);
+    var view =
+        (Map<?, ?>)
+            auth.createStaff(
+                "New technician",
+                "new.staff@example.com",
+                "Staff-password-123!",
+                "TECHNICIAN",
+                context.getBean(Access.class));
+    User u = db.get(User.class, (Long) view.get("id"));
+    assertFalse(u.verified);
+    assertTrue(u.adminCreated);
+    assertFalse(view.containsKey("passwordHash"));
+    var jwt = context.getBean(JwtTokens.class);
+    var request = new org.springframework.mock.web.MockHttpServletRequest();
+    request.addHeader("Authorization", "Bearer " + jwt.issue(u));
+    SecurityContextHolder.clearContext();
+    assertDoesNotThrow(
+        () ->
+            new JwtFilter(jwt, db)
+                .doFilter(
+                    request,
+                    new org.springframework.mock.web.MockHttpServletResponse(),
+                    (req, res) -> {
+                      assertEquals(u.id, context.getBean(Access.class).me().id);
+                    }));
+
+    assertNotNull(auth.login(u.email, "Staff-password-123!", "TECHNICIAN").get("token"));
+    assertThrows(Problem.class, () -> auth.login(u.email, "Staff-password-123!", "ADMIN"));
+    var i = create();
+    as(admin);
+    assignment.assign(i, u.id, admin.id, "MANUAL", "ADMIN", "New staff assignment");
+    assertEquals(u.id, i.technicianId);
+    u.active = false;
+    assertFalse(u.canSignIn());
+    assertThrows(Problem.class, () -> auth.login(u.email, "Staff-password-123!"));
+  }
+
+  @Test
+  void employeesCannotCreateStaff() {
+    as(employee);
+    assertThrows(
+        Problem.class,
+        () ->
+            auth.createStaff(
+                "Forbidden",
+                "forbidden@example.com",
+                "Staff-password-123!",
+                "ADMIN",
+                context.getBean(Access.class)));
+  }
+
+  @Test
+  void unverifiedPasswordRecoveryRequestsVerificationFirst() {
+    employee.verified = false;
+    auth.requestToken(employee.email, "RESET");
+    var tokens = db.list(AccountToken.class, "where e.userId=?1", employee.id);
+    assertEquals(1, tokens.size());
+    assertEquals("VERIFY", tokens.getFirst().kind);
+  }
+
+  @Test
+  void messagesDoNotResumeSlaAndExplicitCompletionDoes() {
+    var i = create();
+    incidents.comment(i.id, "Additional details immediately after assignment", false);
+    acknowledge(i);
+    incidents.action(i.id, "START", "");
+    incidents.action(i.id, "REQUEST_INFO", "Please provide details");
+    var cycle = sla.cycles(i.id).getLast();
+    as(employee);
+    when(clock.instant()).thenReturn(now.plusSeconds(120));
+    incidents.comment(i.id, "Here are the details", false);
+    assertEquals("WAITING_FOR_EMPLOYEE", i.status);
+    assertNotNull(cycle.pausedAt);
+    incidents.action(i.id, "RESPOND", "");
+    assertEquals("IN_PROGRESS", i.status);
+    assertNull(cycle.pausedAt);
+    assertEquals(120, cycle.pausedSeconds);
+    assertThrows(Problem.class, () -> incidents.action(i.id, "RESPOND", ""));
+  }
+
+  @Test
+  void closedChatIsReadOnlyAndUnrelatedUsersCannotRead() {
+    var i = create();
+    incidents.comment(i.id, "Keep this history", false);
+    as(other);
+    assertThrows(Problem.class, () -> incidents.detail(i.id));
+    close(i);
+    assertThrows(Problem.class, () -> incidents.comment(i.id, "Late message", false));
+    assertEquals(1, ((List<?>) incidents.detail(i.id).get("comments")).size());
+    as(admin);
+    assertThrows(Problem.class, () -> incidents.comment(i.id, "Admin late message", false));
+  }
+
+  @Test
+  void reassignmentTransfersChatAccessAndPreservesHistory() {
+    var i = create();
+    incidents.comment(i.id, "History for replacement", false);
+    User previous = db.get(User.class, i.technicianId);
+    User replacement =
+        db.list(User.class, "where e.role='TECHNICIAN' and e.id<>?1", previous.id).getFirst();
+    as(admin);
+    assignment.assign(i, replacement.id, admin.id, "MANUAL", "ADMIN", "Transfer responsibility");
+    as(replacement);
+    assertEquals(1, ((List<?>) incidents.detail(i.id).get("comments")).size());
+    as(previous);
+    assertThrows(Problem.class, () -> incidents.detail(i.id));
+    assertThrows(Problem.class, () -> incidents.comment(i.id, "Old assignee", false));
+    as(admin);
+    assertEquals(1, ((List<?>) incidents.detail(i.id).get("comments")).size());
+  }
+
+  @Test
+  void unverifiedAccountCannotConsumePreviouslyIssuedResetToken() {
+    auth.requestToken(employee.email, "RESET");
+    var job =
+        db.list(MailJob.class, "where e.recipient=?1 order by e.id desc", employee.email)
+            .getFirst();
+    String raw = job.body.substring(job.body.indexOf("&token=") + 7);
+    employee.verified = false;
+    assertThrows(Problem.class, () -> auth.consume(raw, "RESET", "A-new-test-password!"));
+    assertFalse(
+        db.list(AccountToken.class, "where e.tokenHash=?1", AuthService.hash(raw)).getFirst().used);
+  }
+
+  @Test
+  void duplicateRegistrationExplainsExistingEmail() {
+    Problem error =
+        assertThrows(
+            Problem.class,
+            () -> auth.register("Duplicate", " EMPLOYEE@IITSM.LOCAL ", "another-password-123"));
+    assertEquals(409, error.status);
+    assertEquals("This email already exists.", error.getMessage());
+  }
+
+  @Test
   void successfulLogin() {
     assertNotNull(auth.login(employee.email, "Test-only-password-123!").get("token"));
   }
@@ -659,5 +796,73 @@ class WorkflowTest {
     var h = db.list(AssignmentHistory.class, "where e.incidentId=?1", i.id).getFirst();
     assertEquals("FALLBACK", h.selectionSource);
     assertEquals("LEAST_LOADED", h.strategy);
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(longs = {-1, 0, 1})
+  void revisionEvaluatesOriginalDeadline(long secondsFromDeadline) {
+    var incident = create();
+    var cycle = sla.cycles(incident.id).getFirst();
+    Instant deadline = cycle.startedAt.plusSeconds(sla.target(cycle));
+    when(clock.instant()).thenReturn(deadline.plusSeconds(secondsFromDeadline));
+    as(admin);
+    incidents.override(incident.id, "LOW", "Apply longer target");
+    var breaches = db.list(SlaSignal.class, "where e.cycleId=?1 and e.threshold=100", cycle.id);
+    assertEquals(secondsFromDeadline > 0 ? 1 : 0, breaches.size());
+    if (!breaches.isEmpty()) {
+      assertEquals(deadline, breaches.getFirst().deadline);
+      assertEquals(deadline.plusSeconds(1), breaches.getFirst().detectedAt);
+    }
+  }
+
+  @Test
+  void httpRejectsBlankPasswordsOnEveryPasswordWritingRoute() throws Exception {
+    String blank = " ".repeat(12);
+    assertEquals(400, qaHttp("/auth/register", null, """
+        {"name":"Test Employee","email":"blank@example.invalid","password":"%s"}
+        """.formatted(blank)).statusCode());
+    assertEquals(400, qaHttp("/auth/reset-password", null, """
+        {"token":"validation-fixture","password":"%s"}
+        """.formatted(blank)).statusCode());
+    assertEquals(400, qaHttp("/admin/users", admin, """
+        {"name":"Test Technician","email":"staff@example.invalid","password":"%s","role":"TECHNICIAN"}
+        """.formatted(blank)).statusCode());
+  }
+
+  @Test
+  void httpRejectsFractionalAffectedUsers() throws Exception {
+    assertEquals(400, qaHttp("/incidents", employee, """
+        {"title":"QA","description":"Fractional count","serviceId":%d,"categoryId":%d,
+         "impact":2,"urgency":2,"criticality":2,"affectedUsers":1.7}
+        """.formatted(service, category)).statusCode());
+  }
+
+  @Test
+  void httpValidatesSearchDates() throws Exception {
+    assertEquals(400, qaHttp("/incidents?from=bad", employee, null).statusCode());
+    var reversed = qaHttp(
+        "/incidents?from=2026-12-01T00:00:00Z&to=2026-01-01T00:00:00Z", employee, null);
+    assertEquals(400, reversed.statusCode());
+    assertTrue(reversed.body().contains("Start date must not be after the end date"));
+    assertEquals(200, qaHttp("/incidents?from=", employee, null).statusCode());
+    assertEquals(200, qaHttp(
+        "/incidents?from=2026-01-01T00:00:00Z&before=2027-01-01T00:00:00Z&sort=priority",
+        employee, null).statusCode());
+  }
+
+  private java.net.http.HttpResponse<String> qaHttp(String path, User user, String body)
+      throws Exception {
+    String port = context.getEnvironment().getProperty("local.server.port");
+    var request = java.net.http.HttpRequest.newBuilder(
+        java.net.URI.create("http://127.0.0.1:" + port + "/api" + path));
+    if (user != null) {
+      request.header("Authorization", "Bearer " + context.getBean(JwtTokens.class).issue(user));
+    }
+    if (body != null) {
+      request.header("Content-Type", "application/json");
+      request.POST(java.net.http.HttpRequest.BodyPublishers.ofString(body));
+    }
+    return java.net.http.HttpClient.newHttpClient()
+        .send(request.build(), java.net.http.HttpResponse.BodyHandlers.ofString());
   }
 }

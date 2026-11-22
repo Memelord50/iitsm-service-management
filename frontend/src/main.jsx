@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import Auth from "./Auth";
+import ThemeToggle, { useTheme } from "./ThemeToggle";
 import Dashboard from "./Dashboard";
 import { IncidentList, CreateIncident } from "./Incidents";
 import IncidentDetail from "./IncidentDetail";
@@ -25,6 +26,7 @@ import Admin from "./Admin";
 import { api, setToken, human } from "./api";
 import "./style.css";
 function App() {
+  const theme = useTheme();
   const [user, setUser] = useState(null),
     [page, setPage] = useState("Overview"),
     [selected, setSelected] = useState(null),
@@ -33,6 +35,15 @@ function App() {
     [toast, setToast] = useState(null),
     [refresh, setRefresh] = useState(0),
     [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const expire = () => {
+      setUser(null);
+      setSelected(null);
+      setCreate(false);
+    };
+    window.addEventListener("iitsm-session-expired", expire);
+    return () => window.removeEventListener("iitsm-session-expired", expire);
+  }, []);
   function notify(message, error = false) {
     setToast({ message, error });
   }
@@ -52,7 +63,7 @@ function App() {
   }, [user]);
   if (!user)
     return (
-      <Auth
+      <Auth themeToggle={<ThemeToggle {...theme} />}
         onLogin={(u) => {
           setUser(u);
           setPage("Overview");
@@ -132,6 +143,10 @@ function App() {
             </nav>
           </>
         )}
+        <button className="secondary" onClick={async () => {
+          try { const result = await api("/auth/change-password", "POST", {}); notify(result.message); }
+          catch (e) { notify(e.message, true); }
+        }}>Change password by email</button>
         <div className="sidebar-bottom">
           <div className="avatar">
             {user.name
@@ -170,6 +185,7 @@ function App() {
           </div>
           <div className="inline">
             <span className="live-indicator">Connected workspace</span>
+            <ThemeToggle {...theme} />
             <button
               aria-label="Notifications"
               className="icon-button"
@@ -195,6 +211,7 @@ function App() {
               onOpen={open}
               onCreate={() => setCreate(true)}
               onIncidents={() => go("Incidents")}
+              onNavigate={go}
               refresh={refresh}
               notify={notify}
             />
@@ -231,11 +248,12 @@ function App() {
           catalog={catalog}
           onClose={() => setCreate(false)}
           notify={notify}
-          onCreated={(i) => {
+          onCreated={(i, { uploaded, attachmentError } = {}) => {
             setCreate(false);
             setRefresh((x) => x + 1);
             open(i);
-            notify("Incident reported successfully");
+            if (attachmentError) notify("Incident reported. Attachment upload failed: " + attachmentError, true);
+            else notify(uploaded ? "Incident reported and attachment uploaded" : "Incident reported successfully");
           }}
         />
       )}

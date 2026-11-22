@@ -1,0 +1,17 @@
+{
+  "updatedAt": "2026-11-21",
+  "sender": "iitsmsystem@gmail.com",
+  "testRecipient": "sarthak.saxena1012@gmail.com",
+  "transport": "smtp.gmail.com:587 STARTTLS",
+  "testEmailReceipt": "Confirmed by user",
+  "credentialStorage": "Private ignored .env; password not included in this report",
+  "applicationFlow": "Main app running; scheduled application mail worker sent authorized delivery check successfully",
+  "mainApplicationPort": 8081,
+  "mainApplicationUrl": "http://localhost:8081",
+  "emailNotificationsEnabled": true,
+  "mailJobId": 4,
+  "mailJobStatus": "SENT",
+  "mailJobAttempts": 1,
+  "mailJobError": null,
+  "verificationAndResetLinks": "Configured to localhost:8081; token behavior covered by prior regression tests. Real user registration/reset journey not yet exercised."
+}

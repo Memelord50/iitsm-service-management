@@ -32,7 +32,13 @@ public class Errors {
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
-  ResponseEntity<?> conflict() {
+  ResponseEntity<?> conflict(DataIntegrityViolationException exception) {
+    // Concurrent registration can pass the lookup before another request commits.
+    for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+      if (cause.getMessage() != null
+          && cause.getMessage().toLowerCase(java.util.Locale.ROOT).contains("uq_app_user"))
+        return ResponseEntity.status(409).body(Map.of("message", "This email already exists."));
+    }
     return ResponseEntity.status(409).body(Map.of("message", "Conflicting or duplicate record"));
   }
 

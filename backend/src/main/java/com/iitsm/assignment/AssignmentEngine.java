@@ -81,8 +81,8 @@ public class AssignmentEngine {
     for (User u :
         db.list(
             User.class,
-            "where e.role='TECHNICIAN' and e.active=true and e.verified=true and"
-                + " e.available=true")) {
+            "where e.role='TECHNICIAN' and e.active=true and (e.verified=true or"
+                + " e.adminCreated=true) and e.available=true")) {
       boolean skilled =
           !db.list(
                   TechnicianSkill.class,
@@ -134,7 +134,7 @@ public class AssignmentEngine {
       Incident i, Long technician, Long actor, String strategy, String source, String reason) {
     User u = db.get(User.class, technician);
     Problem.require(
-        u.role.equals("TECHNICIAN") && u.active && u.verified && u.available,
+        u.role.equals("TECHNICIAN") && u.canSignIn() && u.available,
         "Technician is not eligible or available");
     Problem.require(!technician.equals(i.technicianId), "Already assigned to this technician");
     var h = new AssignmentHistory();

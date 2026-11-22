@@ -202,3 +202,11 @@ curl http://localhost:8080/api/incidents \
 ```
 
 The repeatable `scripts/e2e.py` demonstrates authenticated creation, acknowledgement, investigation, information exchange, resolution, verification, feedback, reopening, SLA warnings and private-record denial against the actual server.
+
+## Account/chat update (18 November 2026)
+
+- `POST /api/auth/login` accepts optional `role` (`EMPLOYEE`, `TECHNICIAN`, `ADMIN`); a mismatch is rejected.
+- `POST /api/admin/users`: admin only; `{name,email,password,role}` creates technician/admin. Password length 12–72. Active staff may log in immediately, but email verification remains separate.
+- `POST /api/auth/change-password`: authenticated; ignores client recipient selection and queues mail to the current user's email. Unverified accounts receive verification first.
+- Incident comments require assignment and are read-only after CLOSED. Internal notes remain hidden from employees.
+- `RESPOND` is the explicit Information provided confirmation. Text is optional because information can already be in chat/attachments. A regular comment never resumes SLA.

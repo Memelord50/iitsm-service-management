@@ -22,11 +22,15 @@ export default function Dashboard({
   onOpen,
   onCreate,
   onIncidents,
+  onNavigate,
   refresh,
   notify,
 }) {
   const [data, setData] = useState(null),
     [recent, setRecent] = useState([]);
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const retryLoad = () => { setLoadError(""); setRetry(n => n + 1); };
   useEffect(() => {
     let live = true;
     Promise.all([api("/reports"), api("/incidents?size=6")])
@@ -36,11 +40,15 @@ export default function Dashboard({
           setRecent(r.items);
         }
       })
-      .catch((e) => notify(e.message, true));
+      .catch((e) => { if (live) setLoadError(e.message); });
     return () => {
       live = false;
     };
-  }, [refresh]);
+  }, [refresh, retry]);
+  if (loadError) return <section className="panel padded" role="alert">
+    <h2>Could not load this view</h2><p>{loadError}</p>
+    <button className="secondary" onClick={retryLoad}>Try again</button>
+  </section>;
   if (!data) return <Loading />;
   const stats = [
     [
@@ -100,6 +108,28 @@ export default function Dashboard({
           </article>
         ))}
       </div>
+      {user.role !== "EMPLOYEE" && (
+        <section className="panel padded dashboard-queue">
+          <h2>{user.role === "TECHNICIAN" ? "Assigned queue" : "Operations queue"}</h2>
+          <div className="queue-statuses">
+            {["NEW", "ASSIGNED", "IN_PROGRESS", "WAITING_FOR_EMPLOYEE", "RESOLVED"]
+              .filter(status => user.role === "ADMIN" || status !== "NEW")
+              .map(status => (
+                <div key={status}>
+                  <span>{human(status)}</span>
+                  <strong>{data.byStatus.find(row => row.name === status)?.value ?? 0}</strong>
+                </div>
+              ))}
+          </div>
+          <div className="inline queue-links">
+            <button className="secondary" onClick={() => onNavigate("Technicians")}>Technician workload</button>
+            {user.role === "ADMIN" && <>
+              <button className="secondary" onClick={() => onNavigate("SLA monitor")}>SLA monitor</button>
+              <button className="secondary" onClick={() => onNavigate("Reports")}>Reports</button>
+            </>}
+          </div>
+        </section>
+      )}
       <div className="dashboard-grid">
         <section className="panel">
           <div className="panel-title">

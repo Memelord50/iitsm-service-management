@@ -28,7 +28,7 @@ public class JwtFilter extends OncePerRequestFilter {
       if (c != null)
         try {
           User u = db.get(User.class, Long.valueOf(c.getSubject()));
-          if (u.active && u.verified && u.tokenVersion == c.getIntegerClaim("ver"))
+          if (u.canSignIn() && u.tokenVersion == c.getIntegerClaim("ver"))
             SecurityContextHolder.getContext()
                 .setAuthentication(
                     new UsernamePasswordAuthenticationToken(

@@ -42,13 +42,24 @@ public class SearchService {
           "(lower(i.title) like :q or lower(i.reference) like :q or lower(i.description) like :q)");
       params.put("q", "%" + f.get("q").toLowerCase() + "%");
     }
-    if (f.containsKey("from") && !f.get("from").isBlank()) {
-      where.add("i.createdAt>=:from");
-      params.put("from", Instant.parse(f.get("from")));
+    Instant from = date(f, "from");
+    Instant to = date(f, "to");
+    Instant before = date(f, "before");
+    if ((from != null && to != null && from.isAfter(to))
+        || (from != null && before != null && !from.isBefore(before))) {
+      throw new Problem(400, "Start date must not be after the end date");
     }
-    if (f.containsKey("to") && !f.get("to").isBlank()) {
+    if (from != null) {
+      where.add("i.createdAt>=:from");
+      params.put("from", from);
+    }
+    if (to != null) {
       where.add("i.createdAt<=:to");
-      params.put("to", Instant.parse(f.get("to")));
+      params.put("to", to);
+    }
+    if (before != null) {
+      where.add("i.createdAt<:before");
+      params.put("before", before);
     }
     String sla = f.get("slaStatus");
     if ("BREACHED".equals(sla))
@@ -70,13 +81,16 @@ public class SearchService {
     if (!Set.of("createdAt", "reference", "status", "priority", "title").contains(sort))
       sort = "createdAt";
     if (!direction.equals("asc")) direction = "desc";
+    String order = sort.equals("priority")
+        ? "case i.priority when 'LOW' then 1 when 'MEDIUM' then 2 when 'HIGH' then 3 else 4 end"
+        : "i." + sort;
     var count = em.createQuery("select count(i) from Incident i" + clause, Long.class);
     var rows =
         em.createQuery(
             "select i from Incident i"
                 + clause
-                + " order by i."
-                + sort
+                + " order by "
+                + order
                 + " "
                 + direction
                 + ",i.id desc",
@@ -97,5 +111,14 @@ public class SearchService {
         page,
         "size",
         size);
+  }
+  private static Instant date(Map<String, String> filters, String field) {
+    String value = filters.get(field);
+    if (value == null || value.isBlank()) return null;
+    try {
+      return Instant.parse(value);
+    } catch (java.time.format.DateTimeParseException e) {
+      throw new Problem(400, "Invalid " + field + " timestamp. Use an ISO-8601 timestamp.");
+    }
   }
 }

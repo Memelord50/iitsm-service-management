@@ -5,7 +5,7 @@ import { Badge, Loading, Field, Modal, Empty, Table } from "./components";
 export default function IncidentDetail({ id, user, onBack, notify, onChange }) {
   const [item, setItem] = useState(null),
     [files, setFiles] = useState([]),
-    [tab, setTab] = useState("Activity"),
+    [tab, setTab] = useState("Chat"),
     [action, setAction] = useState(null),
     [busy, setBusy] = useState(false),
     [techs, setTechs] = useState([]);
@@ -18,16 +18,19 @@ export default function IncidentDetail({ id, user, onBack, notify, onChange }) {
       setItem(i);
       setFiles(f);
     } catch (e) {
-      notify(e.message, true);
+      setLoadError(e.message);
     }
   }
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const retryLoad = () => { setLoadError(""); setRetry(n => n + 1); };
   useEffect(() => {
     load();
     if (user.role === "ADMIN")
       api("/technicians")
         .then(setTechs)
         .catch((e) => notify(e.message, true));
-  }, [id]);
+  }, [id, retry]);
   async function mutate(path, body) {
     setBusy(true);
     try {
@@ -36,12 +39,31 @@ export default function IncidentDetail({ id, user, onBack, notify, onChange }) {
       setAction(null);
       notify("Incident updated");
       onChange();
+      return true;
     } catch (e) {
       notify(e.message, true);
     } finally {
       setBusy(false);
     }
   }
+  useEffect(() => {
+    if (!item || item.status === "CLOSED") return;
+    let active = true, pending = false;
+    const timer = setInterval(async () => {
+      if (document.hidden || pending || busy) return;
+      pending = true;
+      try {
+        const fresh = await api("/incidents/" + id);
+        if (active) setItem(fresh);
+      } catch { /* A foreground action reports errors; background refresh retries. */ }
+      finally { pending = false; }
+    }, 5000);
+    return () => { active = false; clearInterval(timer); };
+  }, [id, item?.status, busy]);
+  if (loadError) return <section className="panel padded" role="alert">
+    <h2>Could not load this view</h2><p>{loadError}</p>
+    <button className="secondary" onClick={retryLoad}>Try again</button>
+  </section>;
   if (!item) return <Loading />;
   const employee = user.id === item.reporterId,
     tech = user.role === "TECHNICIAN" && user.id === item.technicianId;
@@ -130,7 +152,7 @@ export default function IncidentDetail({ id, user, onBack, notify, onChange }) {
             <div className="tabs">
               {[
                 "Activity",
-                "Comments",
+                "Chat",
                 "SLA history",
                 "Assignments",
                 "Priority history",
@@ -160,8 +182,9 @@ export default function IncidentDetail({ id, user, onBack, notify, onChange }) {
                   ))}
                 </div>
               )}
-              {tab === "Comments" && (
+              {tab === "Chat" && (
                 <>
+                  {item.status === "WAITING_FOR_EMPLOYEE" && <p className="muted">Messages do not resume the SLA. The employee must select Information provided when finished.</p>}
                   <div className="comments">
                     {item.comments.length ? (
                       item.comments.map((c) => (
@@ -180,18 +203,19 @@ export default function IncidentDetail({ id, user, onBack, notify, onChange }) {
                       <Empty>No comments yet. Start a conversation.</Empty>
                     )}
                   </div>
-                  <form
-                    onSubmit={(e) => {
+                  {item.status === "CLOSED" ? <p>Chat is read-only after closure.</p> : !item.technicianId ? <p>Chat opens when a technician is assigned.</p> : <form
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       const d = Object.fromEntries(new FormData(e.target));
-                      mutate("/comments", {
+                      const form = e.target;
+                      const saved = await mutate("/comments", {
                         body: d.body,
                         internalNote: d.internal === "on",
                       });
-                      e.target.reset();
+                      if (saved) form.reset();
                     }}
                   >
-                    <Field label="Add a comment">
+                    <Field label="Message">
                       <textarea
                         name="body"
                         rows="3"
@@ -208,10 +232,10 @@ export default function IncidentDetail({ id, user, onBack, notify, onChange }) {
                       )}
                       <button className="primary" disabled={busy}>
                         <Send size={15} />
-                        Post comment
+                        Send message
                       </button>
                     </div>
-                  </form>
+                  </form>}
                 </>
               )}
               {tab === "SLA history" &&
@@ -402,7 +426,7 @@ export default function IncidentDetail({ id, user, onBack, notify, onChange }) {
                   }
                   onClick={() => setAction(a)}
                 >
-                  {human(a)}
+                  {a === "RESPOND" ? "Information provided" : human(a)}
                 </button>
               ))}
               {user.role === "ADMIN" && (
@@ -474,7 +498,7 @@ export default function IncidentDetail({ id, user, onBack, notify, onChange }) {
         </aside>
       </div>
       {action && (
-        <Modal title={human(action)} onClose={() => setAction(null)}>
+        <Modal title={action === "RESPOND" ? "Information provided" : human(action)} onClose={() => setAction(null)}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -530,9 +554,9 @@ export default function IncidentDetail({ id, user, onBack, notify, onChange }) {
                 </select>
               </Field>
             )}
-            {["ACKNOWLEDGE", "START", "VERIFY"].includes(action) ? (
+            {["ACKNOWLEDGE", "START", "VERIFY", "RESPOND"].includes(action) ? (
               <p>
-                Confirm {human(action).toLowerCase()} for {item.reference}?
+                {action === "RESPOND" ? "Confirm that you have provided the requested information in chat or attachments. This resumes the resolution SLA." : `Confirm ${human(action).toLowerCase()} for ${item.reference}?`}
                 {action === "VERIFY"
                   ? " This closes the incident and credits the verified resolution."
                   : ""}
@@ -560,7 +584,7 @@ export default function IncidentDetail({ id, user, onBack, notify, onChange }) {
                 Cancel
               </button>
               <button className="primary" disabled={busy}>
-                {busy ? "Saving…" : "Confirm " + human(action).toLowerCase()}
+                {busy ? "Saving…" : "Confirm " + (action === "RESPOND" ? "information provided" : human(action).toLowerCase())}
               </button>
             </div>
           </form>

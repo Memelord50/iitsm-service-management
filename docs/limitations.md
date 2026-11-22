@@ -3,7 +3,7 @@
 These are explicit limits, not hidden placeholder implementations.
 
 - A live external LLM account/key was not supplied. The real HTTP adapter was tested against a controlled provider response, AI selection/failure paths were mocked, and missing-key fallback was exercised live. Live-provider credentials, quota and model availability still require deployment validation.
-- A live SMTP provider was not supplied. Verification/recovery and delivery handling are implemented and tested with mocks; real mailbox delivery requires the SMTP settings. Failed messages are visible to admins, capped at three automated attempts. There is no administrative retry button yet.
+- Verification and recovery require configured SMTP. Local test runs use synthetic accounts and disable real delivery. Delivery retries can duplicate email after an interruption between SMTP acceptance and the database commit.
 - Attachment signatures/size/access are validated; content is not scanned for malware. Deletion is logical and bytes are retained. Add scanning, retention policies and an object-storage implementation for production.
 - The serialization lock is held across the bounded AI call, prioritizing consistency over throughput. A high-volume deployment should move advice ahead of a short revalidation/assignment transaction and use more granular locks.
 - Search and list endpoints have bounded pagination. Reports aggregate in Java and detail histories/catalog/technician lists are not paginated; very large installations should use SQL aggregates and paginated history endpoints.
@@ -11,7 +11,7 @@ These are explicit limits, not hidden placeholder implementations.
 - Reopen eligibility is measured from the latest verified closure. A rejected resolution immediately creates another resolution cycle. Verified skill credit is deduplicated per incident, not per reopening cycle. These are deliberate documented policy choices.
 - Lowering the recognition threshold takes effect on the next verified resolution; it does not retroactively bulk-award existing technician skills.
 - Policy changes apply to future snapshots. Manual priority override revises running cycles only. Past stopped clocks remain immutable history.
-- User management edits roles/activation/availability of registered users. It does not create accounts on another person's behalf or bypass email verification.
+- Administrators can create staff accounts with an initial password. Staff can sign in immediately and must verify email before changing the password.
 - SLA checks run every 15 seconds, so detected-at timestamps may follow deadlines; both are recorded. All crossed missing warning thresholds are emitted during the next check.
 - Screens use local time, but day-level trend grouping is UTC. No business-hours calendar is implemented because the requirement specifies 24/7 operation.
 - The default fast integration suite uses H2 in MySQL mode; the same suite was separately executed against real MySQL. Production never selects H2.

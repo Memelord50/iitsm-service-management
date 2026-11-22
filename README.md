@@ -76,11 +76,11 @@ Open **http://localhost:5173**. Vite proxies `/api` to port 8080. Default CORS a
 | Employee | employee@iitsm.local |
 | Second employee | employee2@iitsm.local |
 
-All development accounts use the `DEMO_PASSWORD` supplied at their first creation. Changing that variable later does not change existing passwords. Public registration always creates an unverified employee. An administrator can promote a verified employee to technician or administrator.
+All development accounts use the `DEMO_PASSWORD` supplied at their first creation. Changing that variable later does not change existing passwords. Public registration always creates an unverified employee. Administrators can create staff accounts under Users, set the initial password and choose the technician or administrator role. Staff can sign in immediately. Email verification is required before changing the password.
 
 ### Email
 
-Set the `SMTP_*` variables for your SMTP provider. For local testing, a mail catcher such as Mailpit may listen on SMTP port 1025. Account verification and recovery messages enter a durable mail queue automatically. Incident email notifications are independently enabled under **Configuration**; in-app notifications always work. Delivery runs every 30 seconds, with at most three attempts. Administrators can inspect delivery status without seeing token links. Incident transactions remain committed if SMTP delivery fails. Without SMTP, seed accounts and in-app workflows remain usable, but newly registered users must wait for verification email delivery.
+Set the `SMTP_*` variables for your SMTP provider. For local testing, a mail catcher such as Mailpit may listen on SMTP port 1025. Account verification and recovery messages enter a durable mail queue automatically. Incident email notifications are independently enabled under **Configuration**; in-app notifications always work. Delivery runs every 30 seconds, with at most three attempts. Administrators can inspect delivery status without seeing token links. Each delivery attempt locks only its own job row and commits its result separately. If the process stops after SMTP accepts an email and before the status commits, the job may send again. Incident transactions remain committed if SMTP delivery fails. Without SMTP, seed accounts and in-app workflows remain usable, but newly registered users must wait for verification email delivery.
 
 ### AI assignment
 

@@ -46,14 +46,43 @@ public class AuthService {
     if (users.isEmpty() || !passwords.matches(password, users.getFirst().passwordHash))
       throw new Problem(401, "Invalid email or password");
     var u = users.getFirst();
-    if (!u.active || !u.verified) throw new Problem(403, "Account inactive or email not verified");
+    if (!u.canSignIn()) throw new Problem(403, "Account inactive or email not verified");
     return Map.of("token", jwt.issue(u), "user", view(u));
   }
 
-  public void register(String name, String email, String password) {
+  public Map<String, Object> login(String email, String password, String role) {
+    var result = login(email, password);
+    if (role != null && !role.equals(((Map<?, ?>) result.get("user")).get("role")))
+      throw new Problem(403, "Use the sign-in tab for your account role");
+    return result;
+  }
+
+  public Object createStaff(
+      String name, String email, String password, String role, Access access) {
+    access.admin();
+    Problem.require(Set.of("ADMIN", "TECHNICIAN").contains(role), "Choose Technician or Admin");
+    String normalized = email.toLowerCase(Locale.ROOT).trim();
+    if (usersRepository.findByEmail(normalized).isPresent())
+      throw new Problem(409, "This email already exists.");
     var u = new User();
     u.name = name.trim();
-    u.email = email.toLowerCase().trim();
+    u.email = normalized;
+    u.passwordHash = passwords.encode(password);
+    u.role = role;
+    u.adminCreated = true;
+    db.save(u);
+    sendToken(u, "VERIFY");
+    events.record(access.me().id, "USER_CREATED", "USER", u.id, "Administrator created " + role);
+    return view(u);
+  }
+
+  public void register(String name, String email, String password) {
+    String normalizedEmail = email.toLowerCase().trim();
+    if (usersRepository.findByEmail(normalizedEmail).isPresent())
+      throw new Problem(409, "This email already exists.");
+    var u = new User();
+    u.name = name.trim();
+    u.email = normalizedEmail;
     u.passwordHash = passwords.encode(password);
     u.role = "EMPLOYEE";
     db.save(u);
@@ -63,7 +92,11 @@ public class AuthService {
 
   public void requestToken(String email, String kind) {
     var users = usersRepository.findByEmail(email.toLowerCase().trim()).stream().toList();
-    if (!users.isEmpty()) sendToken(users.getFirst(), kind);
+    if (!users.isEmpty()) {
+      var u = users.getFirst();
+      // An unverified account must verify ownership before resetting its password.
+      if (u.active) sendToken(u, kind.equals("RESET") && !u.verified ? "VERIFY" : kind);
+    }
   }
 
   private void sendToken(User u, String kind) {
@@ -94,6 +127,7 @@ public class AuthService {
     User u = db.lock(User.class, t.userId);
     if (kind.equals("VERIFY")) u.verified = true;
     else {
+      Problem.require(u.verified, "Verify your email before changing your password");
       u.passwordHash = passwords.encode(password);
       u.tokenVersion++;
     }

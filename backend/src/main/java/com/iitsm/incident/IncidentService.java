@@ -123,7 +123,7 @@ public class IncidentService {
     User u = access.me();
     if (Set.of("VERIFY", "REJECT", "REOPEN", "RESPOND").contains(action)) access.reporter(i);
     else access.technician(i);
-    if (Set.of("REQUEST_INFO", "RESPOND", "RESOLVE", "REJECT", "REOPEN").contains(action))
+    if (Set.of("REQUEST_INFO", "RESOLVE", "REJECT", "REOPEN").contains(action))
       Problem.require(text != null && !text.isBlank(), "An explanation is required");
     switch (action) {
       case "ACKNOWLEDGE" -> {
@@ -149,7 +149,7 @@ public class IncidentService {
         commentInternal(i, text, false);
       }
       case "RESPOND" -> {
-        commentInternal(i, text, false);
+        if (text != null && !text.isBlank()) commentInternal(i, text, false);
         sla.resume(i);
       }
       case "RESOLVE" -> {
@@ -205,7 +205,7 @@ public class IncidentService {
 
   private boolean eligible(Long id) {
     var u = db.get(User.class, id);
-    return u.active && u.verified && u.available && u.role.equals("TECHNICIAN");
+    return u.canSignIn() && u.available && u.role.equals("TECHNICIAN");
   }
 
   private Resolution latestResolution(Incident i) {
@@ -250,7 +250,14 @@ public class IncidentService {
   }
 
   public Object comment(Long id, String body, boolean internal) {
-    var i = read(id);
+    db.lock(Settings.class, 1L);
+    var i = db.lock(Incident.class, id);
+    access.incident(i);
+    Problem.require(i.technicianId != null, "Chat opens after technician assignment");
+    Problem.require(!i.status.equals("CLOSED"), "Chat is read-only after closure");
+    Problem.require(
+        body != null && !body.isBlank() && body.length() <= 20000,
+        "Enter a message of up to 20000 characters");
     if (internal && access.me().role.equals("EMPLOYEE"))
       throw new Problem(403, "Internal notes are technician-only");
     commentInternal(i, body, internal);

@@ -20,9 +20,17 @@ def call(path,token=None,body=None,method=None,expected=200):
  return json.loads(raw) if raw else None
 def login(email):return call('/auth/login',body={'email':email,'password':os.environ['DEMO_PASSWORD']})
 admin=login('admin@iitsm.local');employee=login('employee@iitsm.local');other=login('employee2@iitsm.local');techs=[login('technician@iitsm.local'),login('technician2@iitsm.local')]
+# Additional development technicians can be supplied privately in the environment.
+# Never store their passwords in this script or in tracked result files.
+for account in json.loads(os.environ.get('E2E_EXTRA_TECHNICIANS', '[]')):
+ techs.append(call('/auth/login',body={'email':account['email'],'password':account['password']}))
 a=admin['token'];e=employee['token'];catalog=call('/catalog',e);service=next(x['id'] for x in catalog if x['kind']=='SERVICE' and x['name']=='Network & connectivity');category=next(x['id'] for x in catalog if x['kind']=='CATEGORY')
 def create(title,service_id=service):return call('/incidents',e,{'title':title,'description':'Development end-to-end demonstration with real API and MySQL persistence.','serviceId':service_id,'categoryId':category,'impact':1,'urgency':1,'criticality':1,'affectedUsers':1},expected=201)
-def technician(i):return next(x['token'] for x in techs if x['user']['id']==i['technicianId'])
+def technician(i):
+ match=next((x for x in techs if x['user']['id']==i['technicianId']),None)
+ if match is None:
+  raise RuntimeError('Assigned technician is not in the test login set. Supply E2E_EXTRA_TECHNICIANS as a JSON array of email/password objects for additional development technicians.')
+ return match['token']
 def action(i,token,name,text=''):return call('/incidents/'+str(i['id'])+'/actions',token,{'action':name,'text':text})
 i=create('Demo · Standard incident resolution');t=technician(i)
 assert i['assignments'][-1]['selectionSource']=='FALLBACK'

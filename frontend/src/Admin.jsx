@@ -38,16 +38,19 @@ export default function Admin({
     try {
       setData(await api(routes[page] + "?page=" + index));
     } catch (e) {
-      notify(e.message, true);
+      setLoadError(e.message);
     }
   }
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const retryLoad = () => { setLoadError(""); setRetry(n => n + 1); };
   useEffect(() => {
     setData(null);
     setIndex(0);
   }, [page]);
   useEffect(() => {
     load();
-  }, [page, index]);
+  }, [page, index, retry]);
   async function save(path, method, body) {
     setBusy(true);
     try {
@@ -62,6 +65,10 @@ export default function Admin({
       setBusy(false);
     }
   }
+  if (loadError) return <section className="panel padded" role="alert">
+    <h2>Could not load this view</h2><p>{loadError}</p>
+    <button className="secondary" onClick={retryLoad}>Try again</button>
+  </section>;
   if (!data) return <Loading />;
   const titles = {
     Users: "People & permissions",
@@ -94,10 +101,10 @@ export default function Admin({
                 : "Live information from your service desk."}
           </p>
         </div>
-        {["Catalog", "SLA policies"].includes(page) && (
-          <button className="primary" onClick={() => setModal({})}>
+        {["Users", "Catalog", "SLA policies"].includes(page) && (
+          <button className="primary" onClick={() => setModal(page === "Users" ? { role: "TECHNICIAN", active: true, available: true } : {})}>
             <Plus size={17} />
-            Add {page === "Catalog" ? "entry" : "policy"}
+            Add {page === "Users" ? "staff account" : page === "Catalog" ? "entry" : "policy"}
           </button>
         )}
       </div>
@@ -546,7 +553,7 @@ export default function Admin({
         <Modal
           title={
             page === "Users"
-              ? "Manage " + modal.name
+              ? modal.id ? "Manage " + modal.name : "Create staff account"
               : page === "Catalog"
                 ? "Catalog entry"
                 : "SLA policy revision"
@@ -559,6 +566,7 @@ export default function Admin({
               const d = Object.fromEntries(new FormData(e.target));
               d.active = d.active === "on";
               if (page === "Users") {
+                if (!modal.id) { save("/admin/users", "POST", { name: d.name, email: d.email, password: d.password, role: d.role }); return; }
                 d.available = d.available === "on";
                 if (
                   confirm(
@@ -582,21 +590,27 @@ export default function Admin({
           >
             {page === "Users" ? (
               <>
+                {!modal.id && <>
+                  <Field label="Full name"><input name="name" required maxLength={100} /></Field>
+                  <Field label="Email"><input name="email" type="email" required maxLength={200} /></Field>
+                  <Field label="Initial password"><input name="password" type="password" autoComplete="new-password" required minLength={12} maxLength={72} /></Field>
+                  <p className="muted">Share these credentials securely with the user. They can sign in immediately; email verification is required before password changes.</p>
+                </>}
                 <Field label="Role">
                   <select name="role" defaultValue={modal.role}>
-                    {["EMPLOYEE", "TECHNICIAN", "ADMIN"].map((r) => (
+                    {(modal.id ? ["EMPLOYEE", "TECHNICIAN", "ADMIN"] : ["TECHNICIAN", "ADMIN"]).map((r) => (
                       <option key={r}>{r}</option>
                     ))}
                   </select>
                 </Field>
-                <label className="check">
+                {modal.id && <label className="check">
                   <input
                     type="checkbox"
                     name="available"
                     defaultChecked={modal.available}
                   />
                   Available for assignments
-                </label>
+                </label>}
               </>
             ) : page === "Catalog" ? (
               <>
@@ -665,14 +679,14 @@ export default function Admin({
                 ))}
               </>
             )}
-            <label className="check">
+            {(page !== "Users" || modal.id) && <label className="check">
               <input
                 type="checkbox"
                 name="active"
                 defaultChecked={modal.active ?? true}
               />
               Active
-            </label>
+            </label>}
             <div className="form-actions">
               <button
                 type="button"

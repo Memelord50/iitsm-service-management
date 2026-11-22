@@ -23,6 +23,9 @@ export function IncidentList({
     [more, setMore] = useState(false),
     [page, setPage] = useState(0),
     [data, setData] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const retryLoad = () => { setLoadError(""); setRetry(n => n + 1); };
   useEffect(() => {
     let live = true;
     setData(null);
@@ -31,14 +34,18 @@ export function IncidentList({
       () =>
         api("/incidents?" + query)
           .then((r) => live && setData(r))
-          .catch((e) => notify(e.message, true)),
+          .catch((e) => { if (live) setLoadError(e.message); }),
       200,
     );
-    return () => {
+    if (loadError) return <section className="panel padded" role="alert">
+    <h2>Could not load this view</h2><p>{loadError}</p>
+    <button className="secondary" onClick={retryLoad}>Try again</button>
+  </section>;
+  return () => {
       live = false;
       clearTimeout(timer);
     };
-  }, [filters, page, refresh]);
+  }, [filters, page, refresh, retry]);
   function change(k, v) {
     setFilters({ ...filters, [k]: v });
     setPage(0);
@@ -151,15 +158,14 @@ export function IncidentList({
               <Field label={human(k) + " date"} key={k}>
                 <input
                   type="date"
-                  onChange={(e) =>
-                    change(
-                      k,
-                      e.target.value
-                        ? e.target.value +
-                            (k === "from" ? "T00:00:00Z" : "T23:59:59Z")
-                        : "",
-                    )
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const field = k === "from" ? "from" : "before";
+                    if (!value) return change(field, "");
+                    const [year, month, day] = value.split("-").map(Number);
+                    const boundary = new Date(year, month - 1, day + (k === "to" ? 1 : 0));
+                    change(field, boundary.toISOString());
+                  }}
                 />
               </Field>
             ))}
@@ -254,7 +260,7 @@ export function CreateIncident({ catalog, onClose, onCreated, notify }) {
     setBusy(true);
     const f = e.target;
     const d = Object.fromEntries(new FormData(f));
-    const file = d.file;
+    const file = f.elements.namedItem("file").files[0];
     delete d.file;
     for (const k of [
       "serviceId",
@@ -267,16 +273,18 @@ export function CreateIncident({ catalog, onClose, onCreated, notify }) {
       d[k] = Number(d[k]);
     try {
       const r = await api("/incidents", "POST", d);
-      if (file?.size) {
+      let attachmentError;
+      if (file?.name) {
         try {
           const form = new FormData();
           form.append("file", file);
           await api("/incidents/" + r.id + "/attachments", "POST", form);
         } catch (e) {
-          notify("Incident created; attachment failed: " + e.message, true);
+          attachmentError = e.message;
         }
       }
-      onCreated(r);
+      if (file?.name) onCreated(r, { uploaded: !attachmentError, attachmentError });
+      else onCreated(r);
     } catch (e) {
       notify(e.message, true);
     } finally {

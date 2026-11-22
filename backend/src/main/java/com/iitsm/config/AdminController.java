@@ -8,13 +8,31 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class AdminController {
   private final AdminService service;
+  private final com.iitsm.auth.AuthService auth;
+  private final com.iitsm.auth.Access access;
 
-  public AdminController(AdminService s) {
+  public AdminController(
+      AdminService s, com.iitsm.auth.AuthService auth, com.iitsm.auth.Access access) {
     service = s;
+    this.auth = auth;
+    this.access = access;
   }
 
   public record Catalog(
       @NotBlank String kind, @NotBlank @Size(max = 100) String name, boolean active) {}
+
+  public record StaffInput(
+      @NotBlank @Size(max = 100) String name,
+      @Email @NotBlank @Size(max = 200) String email,
+      @NotBlank @Size(min = 12, max = 72) String password,
+      @NotBlank @Pattern(regexp = "TECHNICIAN|ADMIN") String role) {}
+
+  @PostMapping("/admin/users")
+  @org.springframework.web.bind.annotation.ResponseStatus(
+      org.springframework.http.HttpStatus.CREATED)
+  public Object createStaff(@Valid @RequestBody StaffInput d) {
+    return auth.createStaff(d.name, d.email, d.password, d.role, access);
+  }
 
   public record UserUpdate(@NotBlank String role, boolean active, boolean available) {}
 

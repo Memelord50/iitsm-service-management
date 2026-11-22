@@ -1,0 +1,14 @@
+{
+  "database": "iitsm_test",
+  "port": 8082,
+  "incident": "INC-FEEC916A-532",
+  "status": "CLOSED",
+  "pauseSeconds": 377,
+  "checks": {
+    "unverifiedStaffJwt": "PASS",
+    "messageLeftSlaPaused": "PASS (browser)",
+    "explicitCompletionResumedSla": "PASS (browser and API)",
+    "closedChatRejectsPost": "PASS",
+    "mobile390NoOverflow": "PASS (browser)"
+  }
+}

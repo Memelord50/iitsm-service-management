@@ -149,6 +149,7 @@ public class SlaService {
     }
     for (var c : cycles(i.id))
       if (c.stoppedAt == null) {
+        detect(c, db.get(Settings.class, 1L));
         var r = new SlaRevision();
         r.cycleId = c.id;
         r.policyId = p.get().id;

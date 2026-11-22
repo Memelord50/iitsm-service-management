@@ -4,6 +4,7 @@ export const setToken = (value) => {
 };
 export const base = import.meta.env.VITE_API_BASE_URL || "";
 export async function api(path, method = "GET", body) {
+  const requestToken = token;
   const multipart = body instanceof FormData;
   const response = await fetch(base + "/api" + path, {
     method,
@@ -13,6 +14,10 @@ export async function api(path, method = "GET", body) {
     },
     body: body ? (multipart ? body : JSON.stringify(body)) : undefined,
   });
+  if (response.status === 401 && requestToken && token === requestToken) {
+    setToken(null);
+    window.dispatchEvent(new Event("iitsm-session-expired"));
+  }
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || `Request failed (${response.status})`);

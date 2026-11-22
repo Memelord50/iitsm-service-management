@@ -8,7 +8,7 @@ Functional requirements cover three roles, private incident ownership, the compl
 
 ## Technology and alternatives
 
-Java 25 and Spring Boot 4.1.2 provide the mandatory Java platform, dependency injection, transactions and web/security infrastructure. Spring Data JPA/Hibernate maps persistence; a generic EntityManager repository handles history queries while a Spring Data `UserRepository` handles identity lookup. MySQL stores all durable application data, with Flyway V1 schema and V2 constraints/indexes. React uses Vite and JavaScript; CSS supplies the design system, Recharts renders database-backed reports. springdoc 3.2.0 provides Boot 4-compatible OpenAPI.
+Java 25 and Spring Boot 4.1.2 provide the mandatory Java platform, dependency injection, transactions and web/security infrastructure. Spring Data JPA/Hibernate maps persistence; a generic EntityManager repository handles history queries while a Spring Data `UserRepository` handles identity lookup. MySQL stores all durable application data, with Flyway V1 schema, V2 constraints and indexes, and V3 administrator-created accounts. React uses Vite and JavaScript; CSS supplies the design system, Recharts renders database-backed reports. springdoc 3.2.0 provides Boot 4-compatible OpenAPI.
 
 Boot 4's Java 25 support is documented by [Spring](https://spring.io/blog/2025/11/20/spring-boot-4-0-0-available-now/); [springdoc](https://springdoc.org/) documents its 3.x / Boot 4 compatibility. Dependency resolution, compilation, packaging and MySQL integration were also executed, rather than inferred from these compatibility claims.
 
@@ -233,7 +233,7 @@ Criticality 3 or at least 100 affected users raises the matrix result one level,
 
 ```mermaid
 flowchart TD
- I[Incident context] --> E[Filter active verified available technicians]
+ I[Incident context] --> E[Filter active, available technicians eligible to sign in]
  E --> N[Get strategies enabled for normal selection]
  N --> AI[Ask configured provider]
  AI --> V{Recognized enabled identifier?}
@@ -245,7 +245,7 @@ flowchart TD
  C -->|no| U[Keep incident unassigned and notify administrators]
 ```
 
-Eligibility always requires role TECHNICIAN, active account, verified email and availability. No AI output can change this predicate. All comparisons end with ascending numeric technician ID, so identical inputs are deterministic.
+Eligibility always requires role TECHNICIAN, active account, sign-in eligibility and availability. No AI output can change this predicate. All comparisons end with ascending numeric technician ID, so identical inputs are deterministic.
 
 | Strategy | Ordered selection |
 |---|---|

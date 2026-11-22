@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { ArrowUpRight, ShieldCheck, Activity, Layers } from "lucide-react";
 import { api, setToken } from "./api";
 import { Field } from "./components";
-export default function Auth({ onLogin }) {
+export default function Auth({ onLogin, themeToggle }) {
   const query = new URLSearchParams(window.location.search);
   const initial = query.get("action");
   const [mode, setMode] = useState(
     initial === "verify" ? "verify" : initial === "reset" ? "reset" : "login",
   );
+  const [role, setRole] = useState("EMPLOYEE");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -19,7 +20,7 @@ export default function Auth({ onLogin }) {
     const d = Object.fromEntries(new FormData(e.target));
     try {
       if (mode === "login") {
-        const r = await api("/auth/login", "POST", d);
+        const r = await api("/auth/login", "POST", { ...d, role });
         setToken(r.token);
         onLogin(r.user);
       } else {
@@ -87,6 +88,7 @@ export default function Auth({ onLogin }) {
         </footer>
       </aside>
       <main className="auth-form">
+        {themeToggle && <div className="auth-theme-control">{themeToggle}</div>}
         <span className="eyebrow">YOUR SERVICE WORKSPACE</span>
         <h2>{titles[mode]}</h2>
         <p className="muted">
@@ -94,6 +96,9 @@ export default function Auth({ onLogin }) {
             ? "Sign in to manage your IT support."
             : "Secure access for your team."}
         </p>
+        {mode === "login" && <div className="tabs" role="tablist" aria-label="Account role">
+          {["EMPLOYEE", "TECHNICIAN", "ADMIN"].map(r => <button key={r} role="tab" aria-selected={role === r} className={role === r ? "active" : ""} onClick={() => { setRole(r); setError(""); }}>{r[0] + r.slice(1).toLowerCase()}</button>)}
+        </div>}
         <form onSubmit={submit}>
           {mode === "register" && (
             <Field label="Full name">
@@ -157,9 +162,9 @@ export default function Auth({ onLogin }) {
               <button onClick={() => setMode("forgot")}>
                 Forgot password?
               </button>
-              <button onClick={() => setMode("register")}>
-                Create an account
-              </button>
+              {role === "EMPLOYEE" && <button onClick={() => setMode("register")}>
+                Create an employee account
+              </button>}
               <button onClick={() => setMode("resend")}>
                 Resend verification
               </button>
